@@ -9,7 +9,7 @@ from gensim.models import Doc2Vec
 from nltk.cluster import KMeansClusterer
 from nltk.tokenize import RegexpTokenizer
 
-def sent_vectorizer(sent, model, deminsion):
+def sent_vectorizer_average(sent, model, deminsion):
     sent_vec = np.zeros(deminsion)
     numw = 0
     for w in sent:
@@ -18,9 +18,15 @@ def sent_vectorizer(sent, model, deminsion):
             numw+=1
         except:
             pass
-    print(sent_vec.shape)
     return sent_vec / np.sqrt(sent_vec.dot(sent_vec))
 
+
+def sent_vectorizer_concatenate(sent, model, deminsion):
+    sent_vec = np.empty([0, deminsion])
+    for w in sent:
+        sent_vec = np.append(sent_vec, model[w].reshape(1,-1), axis=0)
+
+    return sent_vec
 
 def readData(set_num):
     # training data
@@ -52,12 +58,13 @@ def readData(set_num):
     #print(X)
     #print(vocab)
      
-    V = np.empty((0,X.shape[1]))
+    #V = np.empty((0,X.shape[1]))
+    #V = np.empty((0,0,X.shape[1]))
+    V = []
     for sentence in sentences:
-        V = np.append(V, sent_vectorizer(sentence, model, X.shape[1]).reshape(1,-1), axis=0)
-        print(V.shape)
-        sys.exit()
+        V.append(sent_vectorizer_concatenate(sentence, model, X.shape[1]))
 
+    print("Number of instances: ", len(V))
     return V, labels
 
 
