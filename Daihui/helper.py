@@ -64,7 +64,8 @@ def readData(set_num):
     for sentence in sentences:
         V.append(sent_vectorizer_concatenate(sentence, model, X.shape[1]))
 
-    print("Number of instances: ", len(V))
+    print("Number of instances: ", len(V) )
+    print("V: ", V[0].shape )
     return V, labels
 
 
