@@ -10,7 +10,7 @@ Project: https://github.com/aymericdamien/TensorFlow-Examples/
 """
 
 from __future__ import print_function
-
+from helper import Helper
 import tensorflow as tf
 import random
 
@@ -80,7 +80,7 @@ class ToySequenceData(object):
 
 # Parameters
 learning_rate = 0.01
-training_steps = 10000
+training_steps = 100
 batch_size = 128
 display_step = 200
 
@@ -89,9 +89,15 @@ seq_max_len = 20 # Sequence max length
 n_hidden = 64 # hidden layer num of features
 n_classes = 2 # linear sequence or not
 
+V, labels = Helper().readData(1)
+print(V[0].shape)
+transet = V[0][0], label[0], 
+
 trainset = ToySequenceData(n_samples=1000, max_seq_len=seq_max_len)
-# print(trainset[1])
+print("data:", trainset.data[1], "labels:", trainset.labels[1], "seqlen:", trainset.seqlen[1])
 testset = ToySequenceData(n_samples=500, max_seq_len=seq_max_len)
+
+# trainset = V
 
 # tf Graph input
 x = tf.placeholder("float", [None, seq_max_len, 1])
