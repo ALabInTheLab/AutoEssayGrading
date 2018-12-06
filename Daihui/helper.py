@@ -91,7 +91,7 @@ class Helper:
         for i in range(len(V)):
             if V[i].shape[0] < maxLength:
                 padding = maxLength - V[i].shape[0]
-                V[i] = np.append(V[i], np.zeros((padding, self.X.shape[1])), axis=0)
+                V[i] = np.append(np.zeros((padding, self.X.shape[1])), V[i], axis=0)
 
             V_padding = np.append(V_padding, V[i].reshape((1, maxLength, self.X.shape[1])), axis=0)
             print(V_padding.shape)
@@ -118,7 +118,7 @@ class Helper:
             print(i)
             if V[i].shape[0] < maxLength:
                 padding = maxLength - V[i].shape[0]
-                V[i] = np.append(V[i], np.zeros((padding, self.X.shape[1])), axis=0)
+                V[i] = np.append(np.zeros((padding, self.X.shape[1])), V[i], axis=0)
 
             V_padding = np.append(V_padding, V[i].reshape((maxLength, self.X.shape[1])), axis=0)
 
