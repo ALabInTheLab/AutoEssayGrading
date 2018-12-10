@@ -155,6 +155,7 @@ with tf.name_scope('data'):
     seqlen = tf.placeholder(tf.int32, [BATCH_SIZE], name='sequence_len')
     X = tf.placeholder(tf.float32, [BATCH_SIZE, None, 100], name="X_placeholder")
     Y = tf.placeholder(tf.float32, [BATCH_SIZE, N_CLASSES], name="Y_placeholder")
+    Y_onehot_rev = tf.placeholder(tf.int32, [BATCH_SIZE], name="Y_onehot_rev_placeholder")
 
     # state = tf.placeholder(tf.float32, shape=[None_preds, 2*N_HIDDEN])
     dropout_keep_prob = tf.placeholder(tf.float32, name='dropout_keep_prob')
@@ -291,14 +292,22 @@ with tf.variable_scope('Output_layer') as scope:
 
 
 with tf.name_scope('loss') as scope:
+
     if classification:
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
     else:
         prob_loss = tf.nn.softmax(logits) # (1, 1:12)
-        score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
-        a_term = (score_candi_loss - utils.one_hot_reverse(Y))   # batch_size * 1:12
+        score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # (batch_size, 1:12)
+        a_term = (score_candi_loss - Y_onehot_rev)   # (batch_size, 1:12)
         a_term = tf.square(a_term) * loss_weight # loss_weight (1, 1:12)
         loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction') + l2_reg_lambda * l2_loss
+
+# def tf_one_hot_reverse(Y):
+#     tfzero = tf.constant(0.0, dtype=tf.float32)
+#     bool_ind = tf.not_equal(Y, tfzero)
+#     indices = tf.where(bool_ind)
+#
+#     return tf.gather_nd(Y, indices)
 
 
 with tf.name_scope('optimizer') as scope:
@@ -308,7 +317,6 @@ with tf.name_scope('optimizer') as scope:
 #In[23]
 with tf.name_scope('accuracy') as scope:
     query_size = tf.placeholder(dtype=tf.int32, shape=None)
-
 
     if classification:
         prob = tf.nn.softmax(logits[:query_size])
@@ -323,7 +331,6 @@ with tf.name_scope('accuracy') as scope:
 
         correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
         accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
-
 
 
 
@@ -377,11 +384,8 @@ with tf.Session() as sess:
             # print("Prior weight2 = :", w2.eval())
 
             _, loss_batch, _accuracy, _pred_class, _last_output = sess.run([optimizer, loss, accuracy, pred_class, last_output ],
-                        feed_dict={X: X_batch, Y: Y_batch,
-                                   dropout_keep_prob: DROPOUT,
-                                   seqlen: _seqlen,
-                                   query_size: BATCH_SIZE,
-                                   loss_weight: inv_freq})
+                        feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch),
+                                   dropout_keep_prob: DROPOUT, seqlen: _seqlen, query_size: BATCH_SIZE, loss_weight: inv_freq})
 
             # print("Post weight1 = ", w1.eval())
             # print("Post weight2 = :", w2.eval())
@@ -458,7 +462,8 @@ with tf.Session() as sess:
 
         _accuracy, _pred_class = sess.run(
             [accuracy, pred_class],
-            feed_dict={X: X_batch, Y: Y_batch, dropout_keep_prob: DROPOUT, seqlen: _seqlen, query_size: effective_size, loss_weight: inv_freq})
+            feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch),
+                       dropout_keep_prob: DROPOUT, seqlen: _seqlen, query_size: effective_size, loss_weight: inv_freq})
 
         y_score = utils.one_hot_reverse(Y_batch[:effective_size])
 
