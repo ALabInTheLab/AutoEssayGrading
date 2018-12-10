@@ -30,8 +30,7 @@ import utils
 X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed()
 # X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed()
 
-# _, inv_freq = utils.hist_freq(y_, 12)
-inv_freq = np.ones(12)
+
 
 data_size = y_.shape[0]
 train_size = math.floor(0.9 * data_size)
@@ -46,7 +45,12 @@ y_test = y_[train_size:]
 # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
 # y_train is the corresponding labels ([num_essays])
 
+withWeight = True
 
+if withWeight:
+    _, inv_freq = utils.hist_freq(y_train, 12)
+else:
+    inv_freq = np.ones(12)
 
 # 3 constant
 N_CLASSES = 12
@@ -76,6 +80,9 @@ DISP_STEP = 1
 DROPOUT = 0.75
 N_EPOCHS = 50
 l2_reg_lambda = 0.0
+var_reg_lambda = 0.0
+
+classification = False
 
 
 embedding_size = 100
@@ -229,8 +236,8 @@ def get_controller(cell, _X, seqlen, controller_type="one_direction"):
 
 
 
-
-def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
+with tf.name_scope('lstm') as scope:
+    # def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
 
     lstms = [get_cell(lstm_size, cell_type=cell_type) for lstm_size in lstm_sizes ]
     drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob) for lstm in lstms]
@@ -254,12 +261,10 @@ def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controll
     # # last_output = tf.nn.dropout(last_output, keep_prob=dropout_keep_prob)
     # # This should be equivalent to above DropoutWrapper
 
-    return last_output
+    # return last_output
 
 
-
-
-with tf.name_scope('lstm') as scope:
+# with tf.name_scope('lstm') as scope:
     # lstm_cell = tf.contrib.rnn.LSTMCell(N_HIDDEN, forget_bias=1.0, state_is_tuple=True) # attention: state_is_tuple
     # cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=dropout_keep_prob)
     # outputs, _ = tf.nn.dynamic_rnn(cell, inputs=_X, dtype=tf.float32, sequence_length=seqlen, time_major=False)
@@ -270,7 +275,7 @@ with tf.name_scope('lstm') as scope:
 
 
     # last_output = model(_X, seqlen, [N_HIDDEN], dropout_keep_prob, cell_type, controller_type)
-    last_output = model(_X, seqlen, lstm_sizes, dropout_keep_prob, cell_type, controller_type)
+    # last_output = model(_X, seqlen, lstm_sizes, dropout_keep_prob, cell_type, controller_type)
 
 
 
@@ -286,13 +291,14 @@ with tf.variable_scope('Output_layer') as scope:
 
 
 with tf.name_scope('loss') as scope:
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
-
-    # prob_loss = tf.nn.softmax(logits) # 1* 1:12
-    # score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
-    # a_term = (score_candi_loss - Y) * Y   # Y batch_size * 1:12
-    # a_term = tf.square(a_term) #* loss_weight # loss_weight 1:12
-    # loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction') + l2_reg_lambda * l2_loss
+    if classification:
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
+    else:
+        prob_loss = tf.nn.softmax(logits) # 1* 1:12
+        score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
+        a_term = (score_candi_loss - Y) * Y   # Y batch_size * 1:12
+        a_term = tf.square(a_term) * loss_weight # loss_weight 1:12
+        loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction') + l2_reg_lambda * l2_loss
 
 
 with tf.name_scope('optimizer') as scope:
@@ -303,16 +309,20 @@ with tf.name_scope('optimizer') as scope:
 with tf.name_scope('accuracy') as scope:
     query_size = tf.placeholder(dtype=tf.int32, shape=None)
 
-    # score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
-    # prob = tf.nn.softmax(logits[:query_size])
-    # pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)
-    # correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
-    # accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
 
-    prob = tf.nn.softmax(logits[:query_size])
-    pred_class = tf.argmax(prob, 1)
-    correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
+    if classification:
+        prob = tf.nn.softmax(logits[:query_size])
+        pred_class = tf.argmax(prob, 1)
+
+        correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
+        accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
+    else:
+        score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
+        prob = tf.nn.softmax(logits[:query_size])
+        pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)
+
+        correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
+        accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
 
 
 
