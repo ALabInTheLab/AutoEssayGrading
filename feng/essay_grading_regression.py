@@ -45,6 +45,7 @@ y_test = y_[train_size:]
 # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
 # y_train is the corresponding labels ([num_essays])
 
+classification = False
 withWeight = True
 
 if withWeight:
@@ -82,7 +83,6 @@ N_EPOCHS = 50
 l2_reg_lambda = 0.0
 var_reg_lambda = 0.0
 
-classification = False
 
 
 embedding_size = 100
@@ -155,7 +155,7 @@ with tf.name_scope('data'):
     seqlen = tf.placeholder(tf.int32, [BATCH_SIZE], name='sequence_len')
     X = tf.placeholder(tf.float32, [BATCH_SIZE, None, 100], name="X_placeholder")
     Y = tf.placeholder(tf.float32, [BATCH_SIZE, N_CLASSES], name="Y_placeholder")
-    Y_onehot_rev = tf.placeholder(tf.int32, [BATCH_SIZE], name="Y_onehot_rev_placeholder")
+    Y_onehot_rev = tf.placeholder(tf.int32, [BATCH_SIZE, None], name="Y_onehot_rev_placeholder")
 
     # state = tf.placeholder(tf.float32, shape=[None_preds, 2*N_HIDDEN])
     dropout_keep_prob = tf.placeholder(tf.float32, name='dropout_keep_prob')
@@ -298,7 +298,8 @@ with tf.name_scope('loss') as scope:
     else:
         prob_loss = tf.nn.softmax(logits) # (1, 1:12)
         score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # (batch_size, 1:12)
-        a_term = (score_candi_loss - Y_onehot_rev)   # (batch_size, 1:12)
+        a_term = score_candi_loss -  tf.cast(Y_onehot_rev, dtype=tf.float32) *tf.ones((1, N_CLASSES))   # (batch_size, 1:12)
+        # aterm = tf.range(N_CLASSES) + 1 - Y_onehot_rev
         a_term = tf.square(a_term) * loss_weight # loss_weight (1, 1:12)
         loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction') + l2_reg_lambda * l2_loss
 
@@ -384,7 +385,7 @@ with tf.Session() as sess:
             # print("Prior weight2 = :", w2.eval())
 
             _, loss_batch, _accuracy, _pred_class, _last_output = sess.run([optimizer, loss, accuracy, pred_class, last_output ],
-                        feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch),
+                        feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch)[:, None],
                                    dropout_keep_prob: DROPOUT, seqlen: _seqlen, query_size: BATCH_SIZE, loss_weight: inv_freq})
 
             # print("Post weight1 = ", w1.eval())
@@ -462,7 +463,7 @@ with tf.Session() as sess:
 
         _accuracy, _pred_class = sess.run(
             [accuracy, pred_class],
-            feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch),
+            feed_dict={X: X_batch, Y: Y_batch, Y_onehot_rev: utils.one_hot_reverse(Y_batch)[:, None],
                        dropout_keep_prob: DROPOUT, seqlen: _seqlen, query_size: effective_size, loss_weight: inv_freq})
 
         y_score = utils.one_hot_reverse(Y_batch[:effective_size])

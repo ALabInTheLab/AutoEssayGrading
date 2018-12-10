@@ -119,7 +119,7 @@ def one_hot_reverse(Y):
     output = np.argwhere(Y == 1)[:, 1] + 1
     # output = np.argwhere(Y == 1)[:, 1]
 
-    return output
+    return output.astype(int)
 
 
 def batch_zero_pad(x_batch):
