@@ -27,8 +27,11 @@ import utils
 
 
 # Read in data
-X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed()
-# X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed()
+readfile = '../data/small.tsv'
+readfile = '../data/training_set_rel3.tsv'
+X_, _, y_ = Helper(set_num=0, file_name=readfile).get_embed()
+
+print('reading file: ', readfile)
 
 
 
@@ -45,8 +48,10 @@ y_test = y_[train_size:]
 # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
 # y_train is the corresponding labels ([num_essays])
 
-classification = False
+classification = True
 withWeight = False
+print('classification: ', classification)
+print('withWeight:', withWeight)
 
 if withWeight:
     _, inv_freq = utils.hist_freq(y_train, 12)
@@ -72,16 +77,17 @@ if len(lstm_sizes) > 1:
 cells = ['lstm', 'lstm_block', 'lstm_block_fused', 'gru']
 controllers = ['one_direction', 'bidirection']
 cell_type = cells[0]
-controller_type = controllers[1]
+controller_type = controllers[0]
 
 # Define paramaters for the model
 LEARNING_RATE = 0.001
 BATCH_SIZE = 128
-DISP_STEP = 1
 DROPOUT = 0.75
 N_EPOCHS = 50
 l2_reg_lambda = 0.0
 var_reg_lambda = 0.0
+
+DISP_STEP = 1
 
 
 
@@ -177,7 +183,7 @@ with tf.name_scope('process_data'):
 
     _X = tf.add(tf.tensordot(X, w1, [[2], [0]]), b1)  # >> X.shape = BATCH_SIZE, num_steps, 100
 
-    # _X = tf.nn.dropout(_X, keep_prob=dropout_keep_prob)
+    _X = tf.nn.dropout(_X, keep_prob=dropout_keep_prob)
 
     l2_loss += tf.nn.l2_loss(w1)
     l2_loss += tf.nn.l2_loss(b1)
@@ -241,7 +247,8 @@ with tf.name_scope('lstm') as scope:
     # def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
 
     lstms = [get_cell(lstm_size, cell_type=cell_type) for lstm_size in lstm_sizes ]
-    drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob) for lstm in lstms]
+    drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob,
+                                           input_keep_prob=dropout_keep_prob, state_keep_prob=dropout_keep_prob ) for lstm in lstms]
     cell = tf.contrib.rnn.MultiRNNCell(drops)
     last_output = get_controller(cell, _X, seqlen, controller_type=controller_type)
 
@@ -482,7 +489,21 @@ with tf.Session() as sess:
     print('Test accuracy: ', _accuracy)
     print('Test kappa: ', kappa_test)
 
-    output_file_name = './lstm' + '_' + cell_type + '_' + controller_type + '_' + multilayer + '.csv'
+
+    try:
+        os.mkdir('params_results')
+    except:
+        pass
+
+    output_file_name = './params_results/para_result' + '_' + cell_type + '_' + controller_type + '_' + multilayer + '.csv'
+    for ord in range(1000):
+        if os.path.exists(
+                './params_results/para_result' + '_' + cell_type + '_' + controller_type + '_' + multilayer + str(ord) + '.csv'):
+            continue
+        else:
+            output_file_name = './params_results/para_result' + '_' + cell_type + '_' + controller_type + '_' + multilayer + str(ord) + '.csv'
+            break
+
     with open(output_file_name, 'w', newline='\n') as fw:
         writer = csv.writer(fw, delimiter=',')
         writer.writerow(['test accuracy', _accuracy, 'kappa_test', kappa_test, 'tot_time', time.time()-start_time])
@@ -491,6 +512,11 @@ with tf.Session() as sess:
         writer.writerow(['test_human_score'])
         writer.writerow(test_human_score)
         writer.writerow(lstm_sizes)
+        writer.writerow([['LEARNING_RATE', LEARNING_RATE],
+                        ['BATCH_SIZE', BATCH_SIZE],
+                        ['DROPOUT', DROPOUT],
+                        ['N_EPOCHS', N_EPOCHS],
+                        ['l2_reg_lambda', l2_reg_lambda]])
         writer.writerow([''])
 
 
