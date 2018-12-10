@@ -45,7 +45,7 @@ y_test = y_[train_size:]
 # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
 # y_train is the corresponding labels ([num_essays])
 
-classification = True
+classification = False
 withWeight = False
 
 if withWeight:

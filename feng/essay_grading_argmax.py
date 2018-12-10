@@ -303,16 +303,16 @@ with tf.name_scope('optimizer') as scope:
 with tf.name_scope('accuracy') as scope:
     query_size = tf.placeholder(dtype=tf.int32, shape=None)
 
-    score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
-    prob = tf.nn.softmax(logits[:query_size])
-    pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)
-    correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
-    accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
-
+    # score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
     # prob = tf.nn.softmax(logits[:query_size])
-    # pred_class = tf.argmax(prob, 1)
-    # correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
-    # accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
+    # pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)
+    # correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
+    # accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
+
+    prob = tf.nn.softmax(logits[:query_size])
+    pred_class = tf.argmax(prob, 1)
+    correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
 
 
 
