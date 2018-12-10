@@ -45,8 +45,8 @@ y_test = y_[train_size:]
 # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
 # y_train is the corresponding labels ([num_essays])
 
-classification = False
-withWeight = True
+classification = True
+withWeight = False
 
 if withWeight:
     _, inv_freq = utils.hist_freq(y_train, 12)
@@ -155,7 +155,7 @@ with tf.name_scope('data'):
     seqlen = tf.placeholder(tf.int32, [BATCH_SIZE], name='sequence_len')
     X = tf.placeholder(tf.float32, [BATCH_SIZE, None, 100], name="X_placeholder")
     Y = tf.placeholder(tf.float32, [BATCH_SIZE, N_CLASSES], name="Y_placeholder")
-    Y_onehot_rev = tf.placeholder(tf.int32, [BATCH_SIZE, None], name="Y_onehot_rev_placeholder")
+    Y_onehot_rev = tf.placeholder(tf.float32, [BATCH_SIZE, None], name="Y_onehot_rev_placeholder")
 
     # state = tf.placeholder(tf.float32, shape=[None_preds, 2*N_HIDDEN])
     dropout_keep_prob = tf.placeholder(tf.float32, name='dropout_keep_prob')
