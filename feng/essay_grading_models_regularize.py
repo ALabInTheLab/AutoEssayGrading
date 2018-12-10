@@ -57,7 +57,7 @@ n_hidden_out = 64
 # lstm_sizes = [n_hidden_in, n_hidden_out]
 # lstm_sizes = [128, 64, 32]
 deep_nets = [[128], [128, 64], [128, 64, 32], [128, 64, 128, 64, 32]]
-lstm_sizes = deep_nets[3]
+lstm_sizes = deep_nets[2]
 
 multilayer = ""
 if len(lstm_sizes) > 1:
@@ -65,8 +65,8 @@ if len(lstm_sizes) > 1:
 
 cells = ['lstm', 'lstm_block', 'lstm_block_fused', 'gru']
 controllers = ['one_direction', 'bidirection']
-cell_type = cells[0]
-controller_type = controllers[0]
+cell_type = cells[3]
+controller_type = controllers[1]
 
 # Define paramaters for the model
 LEARNING_RATE = 0.001
@@ -283,13 +283,13 @@ with tf.variable_scope('Output_layer') as scope:
 
 
 with tf.name_scope('loss') as scope:
-    # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
 
-    prob_loss = tf.nn.softmax(logits) # 1* 1:12
-    score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
-    a_term = (score_candi_loss - Y) * Y   # Y batch_size * 1:12
-    a_term = tf.square(a_term) * loss_weight # loss_weight 1:12
-    loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction')
+    # prob_loss = tf.nn.softmax(logits) # 1* 1:12
+    # score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
+    # a_term = (score_candi_loss - Y) * Y   # Y batch_size * 1:12
+    # a_term = tf.square(a_term) * loss_weight # loss_weight 1:12
+    # loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction')
 
 
 with tf.name_scope('optimizer') as scope:
