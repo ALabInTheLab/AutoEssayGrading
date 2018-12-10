@@ -82,9 +82,9 @@ embedding_size = 100
 # maxlength = 800
 
 
-bidi = tf.constant(1, dtype=tf.int32)
-if controller_type == "bidirection":
-    bidi = tf.constant(2, dtype=tf.int32)
+# bidi = tf.constant(1, dtype=tf.int32)
+# if controller_type == "bidirection":
+#     bidi = tf.constant(2, dtype=tf.int32)
 
 np.random.seed(0)
 
@@ -215,7 +215,8 @@ def get_controller(cell, _X, seqlen, controller_type="one_direction"):
         # which is the Tensorflow equivalent of
         #  numpy's rnn_outputs[range(30), seqlen-1, :]
 
-        return tf.concat(last_outputs, axis=1)
+        # return tf.concat(last_outputs, axis=1)
+        return tf.reduce_sum(last_outputs, axis=1)
 
     else:
         print("ERROR: '" + controller_type + "' is a wrong controller type. Use default.")
@@ -228,8 +229,9 @@ def get_controller(cell, _X, seqlen, controller_type="one_direction"):
 
 
 
+with tf.name_scope('lstm') as scope:
 
-def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
+# def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
 
     lstms = [get_cell(lstm_size, cell_type=cell_type) for lstm_size in lstm_sizes ]
     drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob) for lstm in lstms]
@@ -253,12 +255,12 @@ def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controll
     # # last_output = tf.nn.dropout(last_output, keep_prob=dropout_keep_prob)
     # # This should be equivalent to above DropoutWrapper
 
-    return last_output
+    # return last_output
 
 
 
 
-with tf.name_scope('lstm') as scope:
+# with tf.name_scope('lstm') as scope:
     # lstm_cell = tf.contrib.rnn.LSTMCell(N_HIDDEN, forget_bias=1.0, state_is_tuple=True) # attention: state_is_tuple
     # cell = tf.nn.rnn_cell.DropoutWrapper(lstm_cell, output_keep_prob=dropout_keep_prob)
     # outputs, _ = tf.nn.dynamic_rnn(cell, inputs=_X, dtype=tf.float32, sequence_length=seqlen, time_major=False)
@@ -269,12 +271,12 @@ with tf.name_scope('lstm') as scope:
 
 
     # last_output = model(_X, seqlen, [N_HIDDEN], dropout_keep_prob, cell_type, controller_type)
-    last_output = model(_X, seqlen, lstm_sizes, dropout_keep_prob, cell_type, controller_type)
+    # last_output = model(_X, seqlen, lstm_sizes, dropout_keep_prob, cell_type, controller_type)
 
 
 
 with tf.variable_scope('Output_layer') as scope:
-    w2 = tf.Variable(tf.truncated_normal(shape=[lstm_sizes[-1] * bidi, N_CLASSES]), name='w2')
+    w2 = tf.Variable(tf.truncated_normal(shape=[lstm_sizes[-1], N_CLASSES]), name='w2')
     # b2 = tf.Variable(tf.constant(0.1, shape=[N_CLASSES]), name='b2')
     b2 = tf.Variable(tf.truncated_normal([N_CLASSES], mean=0.0, stddev=1.0), name='b2')
 
