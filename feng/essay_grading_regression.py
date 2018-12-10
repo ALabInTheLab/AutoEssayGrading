@@ -328,7 +328,7 @@ with tf.name_scope('accuracy') as scope:
 
     if classification:
         prob = tf.nn.softmax(logits[:query_size])
-        pred_class = tf.argmax(prob, 1)
+        pred_class = tf.argmax(prob, 1) + 1
 
         correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
