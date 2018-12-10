@@ -27,8 +27,8 @@ import utils
 
 
 # Read in data
-# X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed()
-X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed()
+X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed()
+# X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed()
 
 # _, inv_freq = utils.hist_freq(y_, 12)
 inv_freq = np.ones(12)
@@ -67,7 +67,7 @@ if len(lstm_sizes) > 1:
 cells = ['lstm', 'lstm_block', 'lstm_block_fused', 'gru']
 controllers = ['one_direction', 'bidirection']
 cell_type = cells[0]
-controller_type = controllers[0]
+controller_type = controllers[1]
 
 # Define paramaters for the model
 LEARNING_RATE = 0.001
@@ -215,7 +215,8 @@ def get_controller(cell, _X, seqlen, controller_type="one_direction"):
         # which is the Tensorflow equivalent of
         #  numpy's rnn_outputs[range(30), seqlen-1, :]
 
-        return tf.concat(last_outputs, axis=1)
+        # return tf.concat(last_outputs, axis=1)
+        return tf.add(last_outputs[0], last_outputs[1])
 
     else:
         print("ERROR: '" + controller_type + "' is a wrong controller type. Use default.")
@@ -274,11 +275,11 @@ with tf.name_scope('lstm') as scope:
 
 
 with tf.variable_scope('Output_layer') as scope:
-    w2 = tf.Variable(tf.truncated_normal(shape=[lstm_sizes[-1] * bidi, N_CLASSES]), name='w2')
+    w2 = tf.Variable(tf.truncated_normal(shape=[lstm_sizes[-1], N_CLASSES]), name='w2')
     # b2 = tf.Variable(tf.constant(0.1, shape=[N_CLASSES]), name='b2')
     b2 = tf.Variable(tf.truncated_normal([N_CLASSES], mean=0.0, stddev=1.0), name='b2')
 
-    logits = tf.nn.xw_plus_b(last_output, w2, b2, name='logits')
+    logits = tf.nn.xw_plus_b(last_output, w2, b2, name='logits')  # batch_size * n_class
 
     l2_loss += tf.nn.l2_loss(w2)
     l2_loss += tf.nn.l2_loss(b2)
@@ -302,16 +303,19 @@ with tf.name_scope('optimizer') as scope:
 with tf.name_scope('accuracy') as scope:
     query_size = tf.placeholder(dtype=tf.int32, shape=None)
 
-    score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
-    prob = t.nn.softmax(logits[:query_size])
-    pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)  ## attention: score_candi lazy loading?
+    # score_candi = tf.ones((query_size, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32)
+    # prob = tf.nn.softmax(logits[:query_size])
+    # pred_class = tf.reduce_sum(tf.multiply(prob, score_candi), 1)  ## attention: score_candi lazy loading?
+    # correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
+    # accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
 
-    # correct_preds = tf.equal(tf.to_int64(tf.round(pred_class)), tf.argmax(Y, 1))
-    # accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
+    prob = tf.nn.softmax(logits[:query_size])
+    pred_class = tf.argmax(prob, 1)
 
-    # correct_preds = tf.math.exp(- tf.abs((tf.round(pred_class) - tf.cast(tf. argmax(Y, 1), tf.float32) )))
-    correct_preds = tf.math.exp(- 0.5 * tf.square((tf.round(pred_class) - tf.cast(tf. argmax(Y[:query_size], 1), tf.float32) )) / 3)
-    accuracy = tf. reduce_mean(tf.cast(correct_preds, tf.float32))
+    correct_preds = tf.equal(pred_class, tf.argmax(Y, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_preds, tf.float32))
+
+
 
 
 def batch_padding(X_test, y_test, test_size, batch_size):

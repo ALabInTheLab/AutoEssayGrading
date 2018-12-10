@@ -66,7 +66,8 @@ def get_batches(x, y, batch_size=100, needall=False):
             if has_residue and needall:
                 output = batch_padding(x[ii:ii+batch_size], y[ii:ii+batch_size], lengths[ii:ii+batch_size], batch_size)
                 # automatically cut off if ii+batch_size is beyond the range
-                yield output[0], output[1], output[2], residue
+                # yield output[0], output[1], output[2], residue
+                yield output + (residue,)
             else:
                 break
         else:
