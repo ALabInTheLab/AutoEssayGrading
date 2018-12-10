@@ -294,10 +294,10 @@ with tf.name_scope('loss') as scope:
     if classification:
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y), name='loss') + l2_reg_lambda * l2_loss
     else:
-        prob_loss = tf.nn.softmax(logits) # 1* 1:12
+        prob_loss = tf.nn.softmax(logits) # (1, 1:12)
         score_candi_loss = tf.ones((BATCH_SIZE, 1)) * tf.cast(tf.range(N_CLASSES) + 1, tf.float32) # batch_size * 1:12
-        a_term = (score_candi_loss - Y) * Y   # Y batch_size * 1:12
-        a_term = tf.square(a_term) * loss_weight # loss_weight 1:12
+        a_term = (score_candi_loss - utils.one_hot_reverse(Y))   # batch_size * 1:12
+        a_term = tf.square(a_term) * loss_weight # loss_weight (1, 1:12)
         loss = tf.reduce_sum(tf.multiply(prob_loss, a_term), name='lossFunction') + l2_reg_lambda * l2_loss
 
 
