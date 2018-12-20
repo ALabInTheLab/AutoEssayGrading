@@ -54,7 +54,7 @@ def main(embedding_size):
     # X_train is embedded essays (num_essays, num_word, embedding_dim = 100)
     # y_train is the corresponding labels ([num_essays])
 
-    classification = False
+    classification = True
     withWeight = False
     print('classification: ', classification)
     print('withWeight:', withWeight)
@@ -588,7 +588,7 @@ def main(embedding_size):
     dbstop = 0
 
 if __name__ == '__main__':
-    embedding_sizes = [1, 3, 5, 7, 10, 20]
-    # embedding_sizes = [100]
+    # embedding_sizes = [1, 3, 5, 7, 10, 20]
+    embedding_sizes = [100]
     for embedding_size in embedding_sizes:
         main(embedding_size)
