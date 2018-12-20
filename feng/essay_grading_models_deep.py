@@ -27,8 +27,8 @@ import utils
 
 
 # Read in data
-X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed()
-# X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed()
+X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed(100)
+X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed(100)
 
 data_size = y_.shape[0]
 train_size = math.floor(0.9 * data_size)
@@ -55,7 +55,7 @@ n_hidden_out = 64
 # lstm_sizes = [n_hidden_in, n_hidden_out]
 # lstm_sizes = [128, 64, 32]
 deep_nets = [[128], [128, 64], [128, 64, 32], [128, 64, 128, 64, 32]]
-lstm_sizes = deep_nets[3]
+lstm_sizes = deep_nets[0]
 
 multilayer = ""
 if len(lstm_sizes) > 1:
@@ -70,7 +70,7 @@ controller_type = controllers[0]
 LEARNING_RATE = 0.001
 BATCH_SIZE = 128
 DISP_STEP = 1
-DROPOUT = 0.5
+DROPOUT = 0.75
 N_EPOCHS = 50
 
 embedding_size = 100

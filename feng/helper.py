@@ -60,9 +60,9 @@ class Helper:
     #     documents = [TaggedDocument(doc, [i]) for i, doc in enumerate(sentences)]
     #     model = Doc2Vec(documents, vector_size=5, window=2, min_count=1, workers=4)
         
-    def trainWord2Vec(self):
+    def trainWord2Vec(self, embedding_size):
         # training model
-        self.model = Word2Vec(self.sentences, min_count=1)
+        self.model = Word2Vec(self.sentences, min_count=1, size=embedding_size)
          
         # get vector data
         self.X = self.model[self.model.wv.vocab]
@@ -116,8 +116,8 @@ class Helper:
 
         return V_padding, maxLength, self.labels
 
-    def get_embed(self):
-        self.trainWord2Vec()
+    def get_embed(self, embedding_size):
+        self.trainWord2Vec(embedding_size)
         essays = []
         for sentence in self.sentences:
             essays.append(self.sent_vectorizer_concatenate(sentence, self.model, self.X.shape[1]))
