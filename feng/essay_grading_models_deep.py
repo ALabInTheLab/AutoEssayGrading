@@ -27,8 +27,9 @@ import utils
 
 
 # Read in data
+embedding_size = 100
 # X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed(100)
-X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed(100)
+X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed(embedding_size)
 
 data_size = y_.shape[0]
 train_size = math.floor(0.9 * data_size)
@@ -73,7 +74,7 @@ DISP_STEP = 1
 DROPOUT = 0.75
 N_EPOCHS = 50
 
-embedding_size = 100
+# embedding_size = 100
 # maxlength = 800
 
 
@@ -85,10 +86,11 @@ np.random.seed(0)
 
 
 
-print(cell_type)
-print(controller_type)
-print(lstm_sizes)
-
+# print(cell_type)
+# print(controller_type)
+# print(lstm_sizes)
+print('LEARNING_RATE:', LEARNING_RATE, 'DROPOUT:', DROPOUT,
+      'embedding_size:', embedding_size)
 
 
 # In[4]
@@ -141,7 +143,7 @@ Y_train = one_hot(y_train, N_CLASSES)
 with tf.name_scope('data'):
     # num_word = tf.Variable(tf.constant(800, tf.int32), name='num_word')
     seqlen = tf.placeholder(tf.int32, [BATCH_SIZE], name='sequence_len')
-    X = tf.placeholder(tf.float32, [BATCH_SIZE, None, 100], name="X_placeholder")
+    X = tf.placeholder(tf.float32, [BATCH_SIZE, None, embedding_size], name="X_placeholder")
     Y = tf.placeholder(tf.float32, [BATCH_SIZE, N_CLASSES], name="Y_placeholder")
 
 # state = tf.placeholder(tf.float32, shape=[None_preds, 2*N_HIDDEN])
@@ -151,7 +153,7 @@ global_step = tf.Variable(0, dtype=tf.int32, trainable=False, name='global_step'
 
 #In[6]
 with tf.name_scope('process_data'):
-    w1 = tf.Variable(tf.truncated_normal(shape=[100, lstm_sizes[0]], stddev=1.0), name='w1')
+    w1 = tf.Variable(tf.truncated_normal(shape=[embedding_size, lstm_sizes[0]], stddev=1.0), name='w1')
     b1 = tf.Variable(tf.truncated_normal([lstm_sizes[0]], mean=0.0, stddev=1.0), name='b1')
 
     # _X = tf.transpose(X, perm=[1, 0, 2]) # >> _X.shape = num_steps, BATCH_SIZE, 100
