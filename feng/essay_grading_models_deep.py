@@ -27,7 +27,7 @@ import utils
 
 
 # Read in data
-X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed(100)
+# X_, _, y_ = Helper(set_num=0, file_name='../data/small.tsv').get_embed(100)
 X_, _, y_ = Helper(set_num=0, file_name='../data/training_set_rel3.tsv').get_embed(100)
 
 data_size = y_.shape[0]
