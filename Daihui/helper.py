@@ -1,12 +1,15 @@
 import numpy as np
 import pandas as pd
 
-import sys, time
+import sys, time, math
 
 from gensim.models import Word2Vec
 # from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
+from nltk.stem.porter import*
+from collections import Counter
 
 class Helper:
     def __init__(self, set_num, file_name):
@@ -73,15 +76,13 @@ class Helper:
         #print(X)
         #print(vocab)
     
-    # def getAverage(self):
-    #     self.trainWord2Vec()
-    #     V = np.empty((0, X.shape[1]))
-    #     for sentence in self.sentences:
-    #         V = np.append(V, self.sent_vectorizer_average(sentence, self.model, self.X.shape[1]).reshape(1,-1), axis=0)
-    #
-    #     print("Data size: ", V.shape)
-    #
-    #     return V, self.labels
+    def getAverage(self, embedding_size):
+        self.trainWord2Vec(embedding_size)
+        V = np.empty((0, self.X.shape[1]))
+        for sentence in self.sentences:
+            V = np.append(V, self.sent_vectorizer_average(sentence, self.model, self.X.shape[1]).reshape(1,-1), axis=0)
+        print("Data size: ", V.shape)
+        return V, self.labels
 
     def getPadding3D(self):
         self.trainWord2Vec()
@@ -173,3 +174,27 @@ class Helper:
             V_padding = np.append(V_padding, V[i].reshape((maxLength, self.X.shape[1])), axis=0)
 
         return V_padding, maxLength, self.labels
+
+    '''
+    def tfidf(word, count, count_list):
+        tf = count[word] / sum(count.values())
+        n_containing = sum(1 for count in count_list if word in count)
+        idf = math.log(len(count_list)) / (1 + n_containing)
+        return tf*idf
+
+    def getTFIDF(self):
+        countlist = []
+        for sentence in self.sentences:
+            filtered = [w for w in sentence if not w in stopwords.words('english')]
+            stemmer = PorterStemmer()
+            stemmed = stem_tokens(filtered, stemmer)
+            count = Counter(stemmed)
+            countlist.append(count)
+
+        for i, count in enumerate(countlist):
+            print("Top words in document {}".format(i + 1))
+            scores = {word: tfidf(word, count, countlist) for word in count}
+            sorted_words = sorted(scores.items(), key = lambda x: x[1], reverse=True)
+            for word, score in sorted_words[:5]:
+                print("\tWord: {}, TF-IDF: {}".format(word, round(score, 5)))
+    '''

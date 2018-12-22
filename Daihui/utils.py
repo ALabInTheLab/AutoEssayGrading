@@ -109,7 +109,7 @@ def one_hot(Y, n_classes):
     # for idx in range(batch_size):
     #     output[idx, Y[idx]-1] = 1
 
-    output[np.arange(batch_size), Y.astype(int) - 1] = 1
+    output[np.arange(batch_size), Y.astype(int) - 1z] = 1
     # output[np.arange(batch_size), Y.astype(int)] = 1
     # return output
     return output
