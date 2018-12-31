@@ -189,7 +189,7 @@ def main(embedding_size):
 
         _X = tf.add(tf.tensordot(X, w1, [[2], [0]]), b1)  # >> X.shape = BATCH_SIZE, num_steps, 100
 
-        _X = tf.nn.dropout(_X, keep_prob=dropout_keep_prob)
+        # _X = tf.nn.dropout(_X, keep_prob=dropout_keep_prob)
 
         l2_loss += tf.nn.l2_loss(w1)
         l2_loss += tf.nn.l2_loss(b1)
@@ -253,8 +253,8 @@ def main(embedding_size):
         # def model(_X, seqlen , lstm_sizes, dropout_keep_prob, cell_type="lstm", controller_type="one_direction"):
 
         lstms = [get_cell(lstm_size, cell_type=cell_type) for lstm_size in lstm_sizes ]
-        drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob,
-                                               input_keep_prob=dropout_keep_prob, state_keep_prob=dropout_keep_prob ) for lstm in lstms]
+        drops = [tf.nn.rnn_cell.DropoutWrapper(lstm, output_keep_prob=dropout_keep_prob) for lstm in lstms]
+                                               # input_keep_prob=dropout_keep_prob, state_keep_prob=dropout_keep_prob ) for lstm in lstms]
         cell = tf.contrib.rnn.MultiRNNCell(drops)
         last_output = get_controller(cell, _X, seqlen, controller_type=controller_type)
 
